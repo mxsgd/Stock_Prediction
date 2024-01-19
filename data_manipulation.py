@@ -2,18 +2,24 @@ import pandas as pd
 
 df = pd.read_csv('combined_stock_data.csv')
 
+added = 0
 liczba_segmentow = 21
+
+for i in range(251, len(df), 251):
+    mean_below = df.iloc[i+added-7:i+added].mean()
+    added+=1
+    df.loc[i+added] = mean_below
 
 temp_df = pd.DataFrame()
 true_df = pd.DataFrame()
 
 for i in range(len(df)):
-    if(i % 231 == 0 and i != 0):
-        segment = df.iloc[i:i + liczba_segmentow-1, :].values.flatten()
-        temp_df = pd.concat([temp_df, pd.Series(segment)], axis=1)
-    else:
-        segment = df.iloc[i:i + liczba_segmentow, :].values.flatten()
-        temp_df = pd.concat([temp_df, pd.Series(segment)], axis=1)
+    # if(i % 231 == 0 and i != 0):
+    #     segment = df.iloc[i:i + liczba_segmentow-1, :].values.flatten()
+    #     temp_df = pd.concat([temp_df, pd.Series(segment)], axis=1)
+    # else:
+    segment = df.iloc[i:i + liczba_segmentow, :].values.flatten()
+    temp_df = pd.concat([temp_df, pd.Series(segment)], axis=1)
 
 temp_df = temp_df.transpose().reset_index(drop=True)
 for i in range(0, len(temp_df), liczba_segmentow):
