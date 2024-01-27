@@ -17,9 +17,11 @@ liczba_segmentow = 134
 #         segment = df.loc[i, :].values
 #         temp_df = pd.concat([temp_df, pd.Series(segment)], axis=1)
 #         print(i)
-# temp_df = temp_df.transpose().reset_index(drop=True)
+#
+
 true_df = pd.DataFrame()
 control = 0
+
 for i in range(0, len(df), liczba_segmentow):
     # if(int(i - added*7) % 245 == 0 and i != 0 and control == 0):
     #     segment = df.iloc[i-added:i-added + liczba_segmentow-1, :].values.flatten()
