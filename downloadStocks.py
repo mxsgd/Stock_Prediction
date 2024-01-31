@@ -8,7 +8,7 @@ import pandas_datareader.data as web
 import statsmodels.api as sm
 from sklearn.cluster import KMeans
 
-
+#prepare for downloading stocks
 stocks = []
 collect_data('https://stockanalysis.com/stocks/', stocks)
 print(len(stocks))
@@ -17,12 +17,10 @@ start_date = "2012-01-01"
 end_date = "2024-01-26"
 
 
+# Collecting stocks with specified data length then adding date and ticker index names
 all_stock_data = pd.DataFrame()
-
 test_stocks = flat_stocks[:1000]
-
 min_data_length = 3035
-
 filtered_stocks = [ticker for ticker in test_stocks if len(yf.download(tickers=ticker, start=start_date, end=end_date)) >= min_data_length]
 all_stock_data = yf.download(tickers=filtered_stocks,
                       start=start_date,
@@ -30,20 +28,22 @@ all_stock_data = yf.download(tickers=filtered_stocks,
 
 all_stock_data.index.names = ['date', 'ticker']
 all_stock_data.columns = all_stock_data.columns.str.lower()
+
+
+#calculating: garman_klass_vol, rsi, bb_low/mid/high, atr, macd and dollar volume
 all_stock_data = Calculations(all_stock_data)
 
+#getting technical analysis columns
 last_cols = [c for c in all_stock_data.columns.unique(0) if c not in ['dollar_volume', 'volume', 'open',
                                                           'high', 'low', 'close']]
-
 
 data = (pd.concat([all_stock_data.unstack('ticker')['dollar_volume'].resample('M').mean().stack('ticker').to_frame('dollar_volume'),
                    all_stock_data.unstack()[last_cols].resample('M').last().stack('ticker')],
                   axis=1)).dropna()
 
+#discard low liquidity stocks
 data['dollar_volume'] = (data.loc[:, 'dollar_volume'].unstack('ticker').rolling(5*12, min_periods=12).mean().stack())
-
 data['dollar_vol_rank'] = (data.groupby('date')['dollar_volume'].rank(ascending=False))
-
 data = data[data['dollar_vol_rank']<150].drop(['dollar_volume', 'dollar_vol_rank'], axis=1)
 
 
@@ -68,18 +68,13 @@ factor_data = web.DataReader('F-F_Research_Data_5_Factors_2x3',
                                'famafrench',
                                start='2010')[0].drop('RF', axis=1)
 
+
 factor_data.index = factor_data.index.to_timestamp()
-
 factor_data = factor_data.resample('M').last().div(100)
-
 factor_data.index.name = 'date'
-
 factor_data = factor_data.join(data['return_1m']).sort_index()
-
 observations = factor_data.groupby(level=1).size()
-
 valid_stocks = observations[observations >= 10]
-
 factor_data = factor_data[factor_data.index.get_level_values('ticker').isin(valid_stocks.index)]
 
 betas = (factor_data.groupby(level=1,
