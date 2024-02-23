@@ -5,7 +5,7 @@ from sklearn.preprocessing import MinMaxScaler
 import keras
 from keras import layers
 
-data = pd.read_csv("raw_stock_test.csv")
+data = pd.read_csv("crypto_stocks.csv")
 column_names = data.columns
 column_names.drop('return_1m')
 
@@ -39,7 +39,7 @@ model.add(layers.LSTM(50, input_shape=(1, len(column_names))))
 # model.add(layers.LSTM(50))
 # model.add(layers.Dropout(0.2))
 model.add(layers.Dense(4, activation='softmax'))
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=[keras.metrics.Precision()])
 
 X_train = X_train.reshape((X_train.shape[0], 1, X_train.shape[1]))
 X_test = X_test.reshape((X_test.shape[0], 1, X_test.shape[1]))
@@ -48,4 +48,6 @@ model.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.1)
 
 model.save("lstm_model.h5")
 loss, accuracy = model.evaluate(X_test,y_test)
+precision = model.evaluate(X_test, y_test, verbose=0)[1]
+print(f'Test Precision: {precision}')
 print(f'Test Accuracy: {accuracy}')
